@@ -38,12 +38,13 @@ class Settings(BaseSettings):
     )
 
     upload_dir: Path = Field(default=BASE_DIR / "uploads", alias="UPLOAD_DIR")
+    storage_dir: Path = Field(default=BASE_DIR / "storage", alias="STORAGE_DIR")
     max_upload_size_mb: int = Field(default=50, alias="MAX_UPLOAD_SIZE_MB")
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     log_file: Path = Field(default=BASE_DIR / "logs" / "estimateai.log", alias="LOG_FILE")
 
-    @field_validator("upload_dir", "log_file", mode="before")
+    @field_validator("upload_dir", "storage_dir", "log_file", mode="before")
     @classmethod
     def resolve_paths(cls, value: str | Path) -> Path:
         path = Path(value)
@@ -54,6 +55,26 @@ class Settings(BaseSettings):
     @property
     def max_upload_size_bytes(self) -> int:
         return self.max_upload_size_mb * 1024 * 1024
+
+    @property
+    def storage_original(self) -> Path:
+        return self.storage_dir / "original"
+
+    @property
+    def storage_thumbnails(self) -> Path:
+        return self.storage_dir / "thumbnails"
+
+    @property
+    def storage_previews(self) -> Path:
+        return self.storage_dir / "previews"
+
+    @property
+    def storage_exports(self) -> Path:
+        return self.storage_dir / "exports"
+
+    @property
+    def storage_temp(self) -> Path:
+        return self.storage_dir / "temp"
 
 
 @lru_cache

@@ -21,9 +21,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . .
 
 # Create runtime directories
-RUN mkdir -p uploads logs
+RUN mkdir -p uploads logs storage/original storage/thumbnails storage/previews storage/exports storage/temp
 
 EXPOSE 8000
 
-# Run migrations then start the API server
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

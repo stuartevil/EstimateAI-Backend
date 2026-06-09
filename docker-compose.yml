@@ -33,6 +33,7 @@ services:
       DEBUG: "false"
     volumes:
       - ./uploads:/app/uploads
+      - ./storage:/app/storage
       - ./logs:/app/logs
     depends_on:
       db:

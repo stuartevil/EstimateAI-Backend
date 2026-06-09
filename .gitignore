@@ -18,6 +18,8 @@ htmlcov/
 logs/
 uploads/*
 !uploads/.gitkeep
+storage/*
+!storage/.gitkeep
 *.log
 .idea/
 .vscode/

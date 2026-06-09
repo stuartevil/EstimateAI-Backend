@@ -1,1 +1,1 @@
-"""HTTP API routers (presentation layer)."""
+"""HTTP API package."""

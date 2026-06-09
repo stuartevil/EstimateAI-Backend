@@ -1,13 +1,19 @@
-"""
-ORM model registry for Alembic autogenerate.
+"""ORM model registry for Alembic and application imports."""
 
-Import all models here so Alembic and tests can discover metadata.
-"""
-
-from app.models.markup import Markup
+from app.models.ai_job import AIJob
+from app.models.annotation import Annotation
+from app.models.drawing import Drawing
 from app.models.measurement import Measurement
-from app.models.pdf_document import PDFDocument
 from app.models.project import Project
+from app.models.takeoff import Takeoff
 from app.models.user import User
 
-__all__ = ["User", "Project", "PDFDocument", "Measurement", "Markup"]
+__all__ = [
+    "User",
+    "Project",
+    "Drawing",
+    "Annotation",
+    "Measurement",
+    "Takeoff",
+    "AIJob",
+]

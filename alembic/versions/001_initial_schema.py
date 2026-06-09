@@ -1,4 +1,4 @@
-"""Initial schema — users, projects, pdf_documents, measurements, markups
+"""Initial schema
 
 Revision ID: 001
 Revises:
@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
+    op.create_index("ix_users_email", "users", ["email"], unique=True)
 
     op.create_table(
         "projects",
@@ -39,15 +39,16 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["owner_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_projects_owner_id"), "projects", ["owner_id"], unique=False)
+    op.create_index("ix_projects_owner_id", "projects", ["owner_id"])
 
     op.create_table(
-        "pdf_documents",
+        "drawings",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("project_id", sa.Uuid(), nullable=False),
         sa.Column("filename", sa.String(length=512), nullable=False),
         sa.Column("original_filename", sa.String(length=512), nullable=False),
         sa.Column("file_path", sa.String(length=1024), nullable=False),
+        sa.Column("thumbnail_path", sa.String(length=1024), nullable=True),
         sa.Column("file_size", sa.Integer(), nullable=False),
         sa.Column("page_count", sa.Integer(), nullable=False),
         sa.Column("mime_type", sa.String(length=128), nullable=False),
@@ -55,15 +56,46 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_pdf_documents_project_id"), "pdf_documents", ["project_id"], unique=False
+    op.create_index("ix_drawings_project_id", "drawings", ["project_id"])
+
+    op.create_table(
+        "takeoffs",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column("project_id", sa.Uuid(), nullable=False),
+        sa.Column("name", sa.String(length=255), nullable=False),
+        sa.Column("status", sa.String(length=50), nullable=False),
+        sa.Column("created_by", sa.Uuid(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
     )
+    op.create_index("ix_takeoffs_project_id", "takeoffs", ["project_id"])
+
+    op.create_table(
+        "annotations",
+        sa.Column("id", sa.Uuid(), nullable=False),
+        sa.Column("project_id", sa.Uuid(), nullable=False),
+        sa.Column("drawing_id", sa.Uuid(), nullable=True),
+        sa.Column("page_number", sa.Integer(), nullable=False),
+        sa.Column("annotation_type", sa.String(length=50), nullable=False),
+        sa.Column("content", sa.String(length=2000), nullable=True),
+        sa.Column("properties", sa.JSON(), nullable=False),
+        sa.Column("created_by", sa.Uuid(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["drawing_id"], ["drawings.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_index("ix_annotations_project_id", "annotations", ["project_id"])
 
     op.create_table(
         "measurements",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("project_id", sa.Uuid(), nullable=False),
-        sa.Column("pdf_document_id", sa.Uuid(), nullable=True),
+        sa.Column("takeoff_id", sa.Uuid(), nullable=True),
+        sa.Column("drawing_id", sa.Uuid(), nullable=True),
         sa.Column("page_number", sa.Integer(), nullable=False),
         sa.Column("measurement_type", sa.String(length=50), nullable=False),
         sa.Column("label", sa.String(length=255), nullable=False),
@@ -73,52 +105,39 @@ def upgrade() -> None:
         sa.Column("created_by", sa.Uuid(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["pdf_document_id"], ["pdf_documents.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["drawing_id"], ["drawings.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["takeoff_id"], ["takeoffs.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_measurements_project_id"), "measurements", ["project_id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_measurements_pdf_document_id"),
-        "measurements",
-        ["pdf_document_id"],
-        unique=False,
-    )
+    op.create_index("ix_measurements_project_id", "measurements", ["project_id"])
 
     op.create_table(
-        "markups",
+        "ai_jobs",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("project_id", sa.Uuid(), nullable=False),
-        sa.Column("pdf_document_id", sa.Uuid(), nullable=True),
-        sa.Column("page_number", sa.Integer(), nullable=False),
-        sa.Column("markup_type", sa.String(length=50), nullable=False),
-        sa.Column("content", sa.String(length=2000), nullable=True),
-        sa.Column("properties", sa.JSON(), nullable=False),
+        sa.Column("drawing_id", sa.Uuid(), nullable=True),
+        sa.Column("job_type", sa.String(length=50), nullable=False),
+        sa.Column("status", sa.String(length=50), nullable=False),
+        sa.Column("input_payload", sa.JSON(), nullable=False),
+        sa.Column("result", sa.JSON(), nullable=True),
+        sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("created_by", sa.Uuid(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["pdf_document_id"], ["pdf_documents.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["drawing_id"], ["drawings.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(op.f("ix_markups_project_id"), "markups", ["project_id"], unique=False)
-    op.create_index(
-        op.f("ix_markups_pdf_document_id"), "markups", ["pdf_document_id"], unique=False
-    )
+    op.create_index("ix_ai_jobs_project_id", "ai_jobs", ["project_id"])
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_markups_pdf_document_id"), table_name="markups")
-    op.drop_index(op.f("ix_markups_project_id"), table_name="markups")
-    op.drop_table("markups")
-    op.drop_index(op.f("ix_measurements_pdf_document_id"), table_name="measurements")
-    op.drop_index(op.f("ix_measurements_project_id"), table_name="measurements")
+    op.drop_table("ai_jobs")
     op.drop_table("measurements")
-    op.drop_index(op.f("ix_pdf_documents_project_id"), table_name="pdf_documents")
-    op.drop_table("pdf_documents")
-    op.drop_index(op.f("ix_projects_owner_id"), table_name="projects")
+    op.drop_table("annotations")
+    op.drop_table("takeoffs")
+    op.drop_table("drawings")
     op.drop_table("projects")
-    op.drop_index(op.f("ix_users_email"), table_name="users")
     op.drop_table("users")

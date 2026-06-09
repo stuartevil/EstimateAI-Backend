@@ -1,0 +1,1 @@
+"""Drawing revision comparison."""

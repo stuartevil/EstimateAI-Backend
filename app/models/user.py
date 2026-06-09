@@ -10,27 +10,17 @@ from app.core.database import Base
 
 
 class User(Base):
-    """Platform user account."""
-
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        Uuid,
-        primary_key=True,
-        default=uuid.uuid4,
-    )
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(UTC),
-        nullable=False,
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     projects: Mapped[list["Project"]] = relationship(  # noqa: F821
-        "Project",
-        back_populates="owner",
-        cascade="all, delete-orphan",
+        "Project", back_populates="owner", cascade="all, delete-orphan"
     )
