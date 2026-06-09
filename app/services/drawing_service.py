@@ -49,11 +49,22 @@ class DrawingService:
         file_path.write_bytes(content)
         logger.info("Drawing saved to {}", file_path)
 
+        thumbnail_path = None
+
         try:
             page_count = self.processor.extract_page_count(file_path)
             thumbnail_path = self.thumbnail_gen.generate(file_path, project_id)
-        except Exception:
+
+        except Exception as e:
+            logger.exception("Failed processing drawing: {}", e)
+
+            # Remove uploaded PDF if processing fails
             file_path.unlink(missing_ok=True)
+
+            # Remove thumbnail if it was created
+            if thumbnail_path:
+                Path(thumbnail_path).unlink(missing_ok=True)
+
             raise
 
         drawing = Drawing(

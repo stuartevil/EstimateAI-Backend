@@ -15,6 +15,8 @@ class DrawingResponse(BaseModel):
     mime_type: str
     thumbnail_path: str | None = None
     created_at: datetime
+    preview_path: str | None = None
+    status: str = "uploaded"
 
 
 class DrawingUploadResponse(DrawingResponse):
