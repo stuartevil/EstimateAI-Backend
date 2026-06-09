@@ -1,8 +1,8 @@
 """
 JWT token utilities and password hashing.
 
-Security primitives live in core/ so auth and other modules can reuse them
-without creating circular imports between feature modules.
+Security primitives live in core/ so auth and other layers can reuse them
+without creating circular imports between application layers.
 """
 
 from datetime import UTC, datetime, timedelta

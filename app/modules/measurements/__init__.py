@@ -1,1 +1,0 @@
-"""Measurement takeoff module."""
